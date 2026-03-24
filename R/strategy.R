@@ -656,7 +656,7 @@ nearest_og_port_intersection <- function(board, player) {
 #'
 #' @param diversity_weight Numeric bonus per distinct resource at a spot (default 1).
 #' @return Named list of four strategy functions.
-balanced_strategy <- function(diversity_weight = 1, closing_vp = 5) {
+balanced_strategy <- function(diversity_weight = 1, closing_vp = 7) {
 
   # --- Internal scoring function for this strategy ---
   score_fn <- function(board, id) {
@@ -902,7 +902,7 @@ balanced_play_dev_card <- function(board, player, game_state) {
 #' @param total_weight  Numeric multiplier on total pips as a tie-breaker
 #'                      (default 0.5).
 #' @return Named list of four strategy functions.
-sheep_strategy <- function(wool_weight = 2, total_weight = 0.5, closing_vp = 5,
+sheep_strategy <- function(wool_weight = 2, total_weight = 0.5, closing_vp = 7,
                            balance_weight = 1) {
 
   # Composite scoring function: heavily weights wool pips, small bonus for
@@ -1161,7 +1161,7 @@ sheep_strategy <- function(wool_weight = 2, total_weight = 0.5, closing_vp = 5,
 #' @param og_weight    Numeric multiplier on ore+grain pips (default 2).
 #' @param total_weight Numeric tie-breaker on total pips (default 0.5).
 #' @return Named list of four strategy functions.
-ore_grain_strategy <- function(og_weight = 2, total_weight = 0.5, closing_vp = 5,
+ore_grain_strategy <- function(og_weight = 2, total_weight = 0.5, closing_vp = 7,
                                balance_weight = 1) {
 
   # Combined ore+grain scoring.
