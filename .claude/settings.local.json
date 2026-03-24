@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(python:*)",
+      "Bash(Rscript -e \"setwd\\(''tests/testthat''\\); source\\(''testthat.R''\\)\")",
+      "WebFetch(domain:boardgamegeek.com)",
+      "WebFetch(domain:www.catan.com)",
+      "Bash(Rscript testthat.R)",
+      "WebFetch(domain:www.quora.com)"
+    ]
+  }
+}
