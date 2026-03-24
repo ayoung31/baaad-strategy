@@ -72,7 +72,12 @@ game_result_to_rows <- function(result, game_id) {
 #'   uses seed + game_id so individual games are reproducible in isolation while
 #'   the full run is also deterministic. When NULL, no seed is set.
 #' @param verbose    Logical. When TRUE, prints a progress dot every 100 games
-#'   and a summary line at the end. Default FALSE.
+#'   (sequential) or a completion line (parallel). Default FALSE.
+#' @param n_cores    Integer number of parallel workers. Default 1 (sequential).
+#'   On Unix/Linux uses forking (workers inherit the parent environment
+#'   automatically). On Windows uses socket clusters (all globals are exported
+#'   to each worker). Set to parallel::detectCores() - 1L for maximum
+#'   parallelism, or read from SLURM_CPUS_PER_TASK on an HPC cluster.
 #' @return Named list with two elements:
 #'   - `games`:   data.frame with one row per game; columns:
 #'                  game_id, winner_id, winner_strategy, turns, is_stalemate
@@ -81,7 +86,12 @@ game_result_to_rows <- function(result, game_id) {
 #'                  settlements, cities, roads, knights,
 #'                  longest_road, largest_army
 run_simulation <- function(n_games, strategies, board = NULL, seed = NULL,
-                           verbose = FALSE) {
+                           verbose = FALSE, n_cores = 1L) {
+  if (n_cores > 1L) {
+    return(.run_simulation_parallel(n_games, strategies, board, seed,
+                                    verbose, n_cores))
+  }
+
   game_rows   <- vector("list", n_games)
   player_rows <- vector("list", n_games)
   n_errors    <- 0L
@@ -123,6 +133,82 @@ run_simulation <- function(n_games, strategies, board = NULL, seed = NULL,
   list(
     games   = do.call(rbind, game_rows),
     players = do.call(rbind, player_rows)
+  )
+}
+
+
+# =============================================================================
+# Parallel runner (private)
+# =============================================================================
+
+#' Parallel backend for run_simulation().
+#'
+#' On Unix/Linux (including HPC), uses makeForkCluster() so workers inherit
+#' the parent process environment — no explicit export of board.R / player.R /
+#' strategy.R / game.R functions is needed.
+#'
+#' On Windows, uses makePSOCKcluster() and exports all objects from .GlobalEnv
+#' (i.e. every function sourced before this call) plus the local call arguments.
+#'
+#' Game IDs are preserved from seq_len(n_games) even when individual games
+#' fail, so the output game_id column is stable.
+#'
+#' @param n_games    Integer.
+#' @param strategies Named list of strategy objects.
+#' @param board      Board list or NULL.
+#' @param seed       Integer base seed or NULL.
+#' @param verbose    Logical.
+#' @param n_cores    Integer >= 2.
+#' @return Same named list structure as run_simulation() (sequential path).
+.run_simulation_parallel <- function(n_games, strategies, board, seed,
+                                     verbose, n_cores) {
+  if (.Platform$OS.type == "unix") {
+    # Fork: workers share parent memory — no exports needed.
+    cl <- parallel::makeForkCluster(n_cores)
+  } else {
+    # PSOCK: workers are fresh R sessions — export everything.
+    cl <- parallel::makePSOCKcluster(n_cores)
+    parallel::clusterExport(cl, ls(envir = .GlobalEnv), envir = .GlobalEnv)
+    local_env <- environment()
+    parallel::clusterExport(cl, c("strategies", "board", "seed"),
+                            envir = local_env)
+  }
+  on.exit(parallel::stopCluster(cl), add = TRUE)
+
+  # Each worker returns list(game_id, result) so original indices survive
+  # failed games during the collection step below.
+  raw <- parallel::parLapply(cl, seq_len(n_games), function(i) {
+    game_seed <- if (!is.null(seed)) seed + i else NULL
+    result <- tryCatch(
+      run_game(strategies, board = board, seed = game_seed),
+      error = function(e) {
+        message("simulation.R: game ", i, " failed — ", conditionMessage(e))
+        NULL
+      }
+    )
+    list(game_id = i, result = result)
+  })
+
+  n_errors   <- sum(vapply(raw, function(x) is.null(x$result), logical(1L)))
+  successful <- Filter(function(x) !is.null(x$result), raw)
+
+  if (n_errors > 0L) {
+    message("run_simulation: ", n_errors, " of ", n_games,
+            " games failed and were excluded from results.")
+  }
+
+  if (verbose) {
+    message(length(successful), " of ", n_games,
+            " games completed across ", n_cores, " cores.")
+  }
+
+  rows <- lapply(successful, function(x) {
+    game_result_to_rows(x$result, game_id = x$game_id)
+  })
+
+  list(
+    games   = do.call(rbind, lapply(rows, `[[`, "game")),
+    players = do.call(rbind, lapply(rows, `[[`, "players"))
   )
 }
 
