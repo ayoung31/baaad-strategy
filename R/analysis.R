@@ -241,6 +241,99 @@ plot_vp_distribution <- function(sim) {
 
 
 # =============================================================================
+# Plot: VP breakdown by source
+# =============================================================================
+
+# Fill colours for each VP source.
+VP_SOURCE_COLORS <- c(
+  settlements  = "#e8c030",   # grain yellow — production base
+  cities       = "#b84a1a",   # brick orange — upgraded production
+  longest_road = "#1155CC",   # blue
+  largest_army = "#7b2d8b",   # purple
+  dev_cards    = "#aaaaaa"    # grey — residual / luck-dependent
+)
+
+#' Stacked bar chart of mean VP broken down by source, per strategy.
+#'
+#' VP sources are derived from the columns already present in the players
+#' data.frame:
+#'
+#'   settlements  =  settlements * 1
+#'   cities       =  cities * 2
+#'   longest_road =  longest_road * 2
+#'   largest_army =  largest_army * 2
+#'   dev_cards    =  vp_total - all of the above  (residual VP dev cards)
+#'
+#' @param sim Named list returned by run_simulation() or
+#'   load_simulation_results(). Only the `players` element is used.
+#' @return A ggplot object.
+plot_vp_breakdown <- function(sim) {
+  players <- sim$players
+
+  # Compute per-player VP contribution from each source.
+  players$vp_settlements  <- players$settlements
+  players$vp_cities       <- players$cities * 2L
+  players$vp_longest_road <- as.integer(players$longest_road) * 2L
+  players$vp_largest_army <- as.integer(players$largest_army) * 2L
+  players$vp_dev_cards    <- players$vp_total -
+                               players$vp_settlements -
+                               players$vp_cities -
+                               players$vp_longest_road -
+                               players$vp_largest_army
+
+  # Mean VP per source per strategy.
+  sources <- c("vp_settlements", "vp_cities", "vp_longest_road",
+                "vp_largest_army", "vp_dev_cards")
+
+  strat_means <- lapply(sort(unique(players$strategy)), function(strat) {
+    sub <- players[players$strategy == strat, sources]
+    means <- colMeans(sub)
+    data.frame(
+      strategy = strat,
+      source   = sub("^vp_", "", names(means)),
+      mean_vp  = unname(means),
+      stringsAsFactors = FALSE
+    )
+  })
+  long <- do.call(rbind, strat_means)
+
+  # Order strategies by mean total VP descending (consistent with other plots).
+  total_vp    <- tapply(players$vp_total, players$strategy, mean)
+  strat_order <- names(sort(total_vp, decreasing = TRUE))
+  long$strategy <- factor(long$strategy, levels = strat_order)
+
+  # Fix source factor order so the stack reads bottom-to-top:
+  # settlements → cities → longest_road → largest_army → dev_cards.
+  long$source <- factor(long$source,
+                        levels = c("settlements", "cities", "longest_road",
+                                   "largest_army", "dev_cards"))
+
+  n_games <- length(unique(players$game_id))
+
+  ggplot(long, aes(x = strategy, y = mean_vp, fill = source)) +
+    geom_col(width = 0.6) +
+    scale_fill_manual(
+      values = VP_SOURCE_COLORS,
+      labels = c(settlements  = "Settlements",
+                 cities       = "Cities",
+                 longest_road = "Longest Road",
+                 largest_army = "Largest Army",
+                 dev_cards    = "VP dev cards"),
+      name = "VP source"
+    ) +
+    scale_y_continuous(breaks = seq(0, 10, by = 2)) +
+    labs(
+      title    = "Mean VP at game end by source and strategy",
+      subtitle = paste0(n_games, " games  \u00b7  averaged over all players"),
+      x        = NULL,
+      y        = "Mean VP"
+    ) +
+    theme_minimal(base_size = 13) +
+    theme(panel.grid.major.x = element_blank())
+}
+
+
+# =============================================================================
 # Main entry point
 # =============================================================================
 
@@ -270,12 +363,14 @@ run_analysis <- function(sim, output_dir = "figures") {
   plots <- list(
     win_rates       = plot_win_rates(summary),
     vp_distribution = plot_vp_distribution(sim),
+    vp_breakdown    = plot_vp_breakdown(sim),
     game_length     = plot_game_length(sim)
   )
 
   figure_files <- c(
     win_rates       = "win_rates.png",
     vp_distribution = "vp_distribution.png",
+    vp_breakdown    = "vp_breakdown.png",
     game_length     = "game_length.png"
   )
 
