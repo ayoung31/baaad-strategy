@@ -694,3 +694,154 @@ test_that("rolling 7 is not handled by compute_production (called separately)", 
                    integer(1))
   expect_false(7L %in% tokens)
 })
+
+# =============================================================================
+# HEX_SPIRAL_ORDER constant
+# =============================================================================
+
+test_that("HEX_SPIRAL_ORDER has exactly 19 elements", {
+  expect_length(HEX_SPIRAL_ORDER, 19L)
+})
+
+test_that("HEX_SPIRAL_ORDER is a permutation of hex IDs 1-19", {
+  expect_equal(sort(HEX_SPIRAL_ORDER), 1L:19L)
+})
+
+test_that("consecutive hex IDs in HEX_SPIRAL_ORDER are adjacent on the board", {
+  for (k in seq_len(length(HEX_SPIRAL_ORDER) - 1L)) {
+    h1 <- HEX_SPIRAL_ORDER[k]
+    h2 <- HEX_SPIRAL_ORDER[k + 1L]
+    expect_true(h2 %in% HEX_ADJACENCY[[h1]],
+                label = paste("spiral step", k, ": hex", h1, "adjacent to hex", h2))
+  }
+})
+
+# =============================================================================
+# STANDARD_TOKEN_SEQUENCE constant
+# =============================================================================
+
+test_that("STANDARD_TOKEN_SEQUENCE has exactly 18 elements", {
+  expect_length(STANDARD_TOKEN_SEQUENCE, 18L)
+})
+
+test_that("STANDARD_TOKEN_SEQUENCE is a permutation of NUMBER_TOKENS", {
+  expect_equal(sort(STANDARD_TOKEN_SEQUENCE), sort(NUMBER_TOKENS))
+})
+
+test_that("STANDARD_TOKEN_SEQUENCE contains no 7s", {
+  expect_false(7L %in% STANDARD_TOKEN_SEQUENCE)
+})
+
+# =============================================================================
+# HEX_ADJACENCY
+# =============================================================================
+
+test_that("HEX_ADJACENCY has 19 elements", {
+  expect_length(HEX_ADJACENCY, 19L)
+})
+
+test_that("HEX_ADJACENCY is symmetric", {
+  for (h1 in seq_len(19)) {
+    for (h2 in HEX_ADJACENCY[[h1]]) {
+      expect_true(h1 %in% HEX_ADJACENCY[[h2]],
+                  label = paste("symmetry between hex", h1, "and hex", h2))
+    }
+  }
+})
+
+test_that("each hex has between 2 and 6 neighbours in HEX_ADJACENCY", {
+  for (h in seq_len(19)) {
+    n <- length(HEX_ADJACENCY[[h]])
+    expect_true(n >= 2L && n <= 6L,
+                label = paste("hex", h, "has", n, "neighbours"))
+  }
+})
+
+test_that("known adjacent hex pairs appear in HEX_ADJACENCY", {
+  # Hex 1 and hex 2 share intersections 5 and 9
+  expect_true(2L %in% HEX_ADJACENCY[[1L]])
+  # Hex 1 and hex 4 share intersections 8 and 13
+  expect_true(4L %in% HEX_ADJACENCY[[1L]])
+  # Centre hex 10 is surrounded by 6 neighbours
+  expect_length(HEX_ADJACENCY[[10L]], 6L)
+})
+
+test_that("known non-adjacent hex pairs are absent from HEX_ADJACENCY", {
+  # Hex 1 (top-left corner) and hex 19 (bottom-right corner) are far apart
+  expect_false(19L %in% HEX_ADJACENCY[[1L]])
+  # Hex 1 and hex 3 are in the same row but not neighbours (one hex gap)
+  expect_false(3L %in% HEX_ADJACENCY[[1L]])
+})
+
+# =============================================================================
+# Spiral token placement (random_tokens = FALSE)
+# =============================================================================
+
+test_that("spiral placement assigns tokens in STANDARD_TOKEN_SEQUENCE order", {
+  # With fixed terrain the desert ends up at hex 19 (spiral position 7).
+  # Walk the spiral manually and verify every non-desert hex gets the correct
+  # token from STANDARD_TOKEN_SEQUENCE.
+  b        <- generate_board(random_terrain = FALSE, random_tokens = FALSE)
+  terrains <- vapply(b$hexes, `[[`, character(1), "terrain")
+  desert_id <- which(terrains == "desert")
+
+  token_iter <- 1L
+  for (hex_id in HEX_SPIRAL_ORDER) {
+    if (hex_id == desert_id) next
+    expect_equal(b$hexes[[hex_id]]$token, STANDARD_TOKEN_SEQUENCE[token_iter],
+                 label = paste("hex", hex_id, "(sequence pos", token_iter, ")"))
+    token_iter <- token_iter + 1L
+  }
+})
+
+test_that("spiral placement skips the desert correctly regardless of its position", {
+  # Verify the spiral-skip logic across several seeds with random terrain.
+  for (seed in c(1L, 7L, 42L, 99L)) {
+    b         <- generate_board(random_terrain = TRUE, random_tokens = FALSE, seed = seed)
+    terrains  <- vapply(b$hexes, `[[`, character(1), "terrain")
+    desert_id <- which(terrains == "desert")
+
+    token_iter <- 1L
+    for (hex_id in HEX_SPIRAL_ORDER) {
+      if (hex_id == desert_id) next
+      expect_equal(b$hexes[[hex_id]]$token, STANDARD_TOKEN_SEQUENCE[token_iter],
+                   label = paste("seed", seed, "hex", hex_id))
+      token_iter <- token_iter + 1L
+    }
+  }
+})
+
+test_that("spiral placement assigns all 18 tokens (no hex missed)", {
+  b          <- generate_board(random_terrain = FALSE, random_tokens = FALSE)
+  non_desert <- Filter(function(h) h$terrain != "desert", b$hexes)
+  tokens     <- sort(vapply(non_desert, `[[`, integer(1), "token"))
+  expect_equal(tokens, sort(STANDARD_TOKEN_SEQUENCE))
+})
+
+# =============================================================================
+# No adjacent red numbers (random_tokens = TRUE)
+# =============================================================================
+
+test_that("no two red tokens (6 or 8) are adjacent on a randomly generated board", {
+  b         <- generate_board(seed = 42)
+  tokens    <- vapply(b$hexes, function(h) if (is.na(h$token)) 0L else h$token, integer(1))
+  red_hexes <- which(tokens %in% c(6L, 8L))
+  for (rh in red_hexes) {
+    neighbour_tokens <- tokens[HEX_ADJACENCY[[rh]]]
+    expect_false(any(neighbour_tokens %in% c(6L, 8L)),
+                 label = paste("red token at hex", rh, "has no adjacent red neighbour"))
+  }
+})
+
+test_that("no adjacent red tokens across 20 randomly seeded boards", {
+  for (seed in seq_len(20L)) {
+    b         <- generate_board(seed = seed)
+    tokens    <- vapply(b$hexes, function(h) if (is.na(h$token)) 0L else h$token, integer(1))
+    red_hexes <- which(tokens %in% c(6L, 8L))
+    for (rh in red_hexes) {
+      neighbour_tokens <- tokens[HEX_ADJACENCY[[rh]]]
+      expect_false(any(neighbour_tokens %in% c(6L, 8L)),
+                   label = paste("seed", seed, "hex", rh))
+    }
+  }
+})
