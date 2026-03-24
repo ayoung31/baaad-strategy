@@ -66,9 +66,17 @@ def _render_hex_sticker(path, render_height=924):
     ]:
         draw.polygon(ps(gpts), outline=(168, 216, 120, 28))
 
-    # Tail
+    # ── Legs drawn FIRST so the wool body overlaps their tops ──────────────────
+    # Tops sit at y=132 (well inside the body) so there is no visible gap.
+    # Bottoms stay at y=170, same as the original SVG hooves baseline.
+    leg_r = round(4 * sc)
+    for lx in [84, 97, 110, 121]:
+        draw.rounded_rectangle(rct(lx, 132, 8, 38), radius=leg_r, fill=(202, 194, 184))
+
+    # ── Tail ────────────────────────────────────────────────────────────────────
     draw.ellipse(ell(138, 126, 9),  fill=(245, 242, 236))
-    # Wool body
+
+    # ── Wool body (drawn after legs — covers the leg tops) ─────────────────────
     for cx, cy, r, fill in [
         (105, 122, 28, (237, 234, 224)),
         (84,  114, 21, (245, 242, 236)),
@@ -80,7 +88,7 @@ def _render_hex_sticker(path, render_height=924):
     ]:
         draw.ellipse(ell(cx, cy, r), fill=fill)
 
-    # Head
+    # ── Head ────────────────────────────────────────────────────────────────────
     draw.ellipse(ell(62, 131, 16, 13), fill=(202, 194, 184))
     # Ear outer / inner
     draw.ellipse(ell(66, 119,  6,  9), fill=(202, 194, 184))
@@ -93,12 +101,9 @@ def _render_hex_sticker(path, render_height=924):
     draw.ellipse(ell(49,   135, 1.0),      fill=(138, 128, 122))
     draw.ellipse(ell(51.5, 135, 1.0),      fill=(138, 128, 122))
 
-    # Legs + hooves
-    leg_r = round(4 * sc)
-    for lx in [84, 97, 110, 121]:
-        draw.rounded_rectangle(rct(lx, 148, 8, 22), radius=leg_r,  fill=(202, 194, 184))
-    for hx, hy in [(84,166),(97,167),(110,167),(121,166)]:
-        draw.rounded_rectangle(rct(hx, hy,  8,  4), radius=round(2*sc), fill=(90, 80, 72))
+    # ── Hooves (drawn last, on top of legs) ─────────────────────────────────────
+    for hx, hy in [(84, 166), (97, 167), (110, 167), (121, 166)]:
+        draw.rounded_rectangle(rct(hx, hy, 8, 4), radius=round(2*sc), fill=(90, 80, 72))
 
     # Text — "baaad" and "STRATEGY"
     font_big = font_small = font_tiny = None
@@ -613,7 +618,31 @@ add_two_col_slide(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Slide 7 — Architecture: 6 Modules
+# Slide 7 — Example Board
+# ══════════════════════════════════════════════════════════════════════════════
+slide = prs.slides.add_slide(BLANK)
+bg(slide, OFF_WHITE)
+rect(slide, 0, 0, SLIDE_W, Inches(1.1), fill_color=MID_GREEN)
+textbox(slide, "Example Board (seed = 42)",
+        Inches(0.4), Inches(0.12), Inches(12.5), Inches(0.9),
+        font_size=Pt(32), bold=True, color=CREAM)
+
+_BOARD_PNG = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                          "figures", "example_board.png")
+if os.path.exists(_BOARD_PNG):
+    img_h = Inches(6.1)
+    img_w = img_h   # square plot
+    img_l = (SLIDE_W - img_w) / 2
+    slide.shapes.add_picture(_BOARD_PNG, img_l, Inches(1.2), img_w, img_h)
+else:
+    textbox(slide, "[ Run scripts/generate_board_plot.R to generate figures/example_board.png ]",
+            Inches(1), Inches(3.5), Inches(11), Inches(0.8),
+            font_size=Pt(18), color=RGBColor(0x88, 0x88, 0x88),
+            align=PP_ALIGN.CENTER, italic=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Slide 8 — Architecture: 6 Modules
 # ══════════════════════════════════════════════════════════════════════════════
 add_bullet_slide(
     "Architecture: 6 R Modules",

@@ -8,7 +8,26 @@
       "WebFetch(domain:www.catan.com)",
       "Bash(Rscript testthat.R)",
       "WebFetch(domain:www.quora.com)",
-      "Bash(Rscript -e \"library\\(testthat\\); source\\(''R/board.R''\\); source\\(''R/player.R''\\); test_file\\(''tests/testthat/test-player.R''\\)\")"
+      "Bash(Rscript -e \"library\\(testthat\\); source\\(''R/board.R''\\); source\\(''R/player.R''\\); test_file\\(''tests/testthat/test-player.R''\\)\")",
+      "Bash(Rscript --vanilla /tmp/test_strategy.R)",
+      "Bash(Rscript scripts/generate_board_plot.R)",
+      "Bash(Rscript --vanilla tmp_smoke.R)",
+      "Bash(Rscript --vanilla tmp_mc.R)",
+      "Bash(Rscript scripts/test_hex_corners.R)",
+      "Bash(Rscript scripts/test_hex_membership.R)",
+      "Bash(Rscript --vanilla tmp_check.R)",
+      "Bash(rm tmp_check.R)",
+      "Bash(Rscript scripts/test_edges.R)",
+      "Bash(Rscript scripts/test_road_coords.R)",
+      "Bash(Rscript scripts/debug_board_layout.R)",
+      "Bash(Rscript scripts/test_seat_order.R)",
+      "Bash(Rscript --vanilla tmp_debug.R)",
+      "Bash(Rscript scripts/test_structure_legend.R)",
+      "Bash(Rscript scripts/test_player_panels.R)",
+      "Bash(Rscript --vanilla -e ':*)",
+      "Bash(Rscript --vanilla /tmp/mc_test.R)",
+      "Bash(Rscript -e \"library\\(testthat\\); source\\(file.path\\(getwd\\(\\), ''..'', ''R'', ''board.R''\\)\\); test_file\\(''testthat/test-simulation.R'', reporter = ''progress''\\)\")",
+      "Bash(Rscript -e \"library\\(testthat\\); source\\(file.path\\(getwd\\(\\), ''..'', ''R'', ''board.R''\\)\\); test_file\\(''testthat/test-analysis.R'', reporter = ''progress''\\)\")"
     ]
   }
 }

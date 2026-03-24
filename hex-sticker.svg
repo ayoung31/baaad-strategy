@@ -23,10 +23,21 @@
 
   <!-- ── Sheep (side profile, facing left) ── -->
 
+  <!-- Legs drawn first so the wool body overlaps their tops -->
+  <rect x="84"  y="132" width="8" height="38" rx="4" fill="#cac2b8"/>
+  <rect x="97"  y="132" width="8" height="38" rx="4" fill="#cac2b8"/>
+  <rect x="110" y="132" width="8" height="38" rx="4" fill="#cac2b8"/>
+  <rect x="121" y="132" width="8" height="38" rx="4" fill="#cac2b8"/>
+  <!-- Hooves -->
+  <rect x="84"  y="166" width="8" height="4" rx="2" fill="#5a5048"/>
+  <rect x="97"  y="167" width="8" height="4" rx="2" fill="#5a5048"/>
+  <rect x="110" y="167" width="8" height="4" rx="2" fill="#5a5048"/>
+  <rect x="121" y="166" width="8" height="4" rx="2" fill="#5a5048"/>
+
   <!-- Tail (right side of body) -->
   <circle cx="138" cy="126" r="9" fill="#f5f2ec"/>
 
-  <!-- Wool body: cluster of overlapping circles -->
+  <!-- Wool body: cluster of overlapping circles (drawn after legs) -->
   <circle cx="105" cy="122" r="28" fill="#edeae0"/>
   <circle cx="84"  cy="114" r="21" fill="#f5f2ec"/>
   <circle cx="93"  cy="101" r="21" fill="#f5f2ec"/>
@@ -47,17 +58,6 @@
   <ellipse cx="50" cy="135" rx="3.5" ry="2.5" fill="#b0a89e"/>
   <circle  cx="49" cy="135" r="1"   fill="#8a807a"/>
   <circle  cx="51.5" cy="135" r="1" fill="#8a807a"/>
-
-  <!-- Legs -->
-  <rect x="84"  y="148" width="8" height="22" rx="4" fill="#cac2b8"/>
-  <rect x="97"  y="149" width="8" height="22" rx="4" fill="#cac2b8"/>
-  <rect x="110" y="149" width="8" height="22" rx="4" fill="#cac2b8"/>
-  <rect x="121" y="148" width="8" height="22" rx="4" fill="#cac2b8"/>
-  <!-- Hooves -->
-  <rect x="84"  y="166" width="8" height="4" rx="2" fill="#5a5048"/>
-  <rect x="97"  y="167" width="8" height="4" rx="2" fill="#5a5048"/>
-  <rect x="110" y="167" width="8" height="4" rx="2" fill="#5a5048"/>
-  <rect x="121" y="166" width="8" height="4" rx="2" fill="#5a5048"/>
 
   <!-- Top text -->
   <text x="100" y="40" font-family="Georgia, serif" font-size="18" font-weight="bold"
