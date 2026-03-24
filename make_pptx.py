@@ -137,7 +137,7 @@ def _render_hex_sticker(path, render_height=924):
 
 _STICKER_PNG = os.path.join(tempfile.gettempdir(), "baaad_sticker.png")
 _render_hex_sticker(_STICKER_PNG)
-REPO_URL = "github.com/amyou/baaad-strategy"
+REPO_URL = "github.com/ayoung31/baaad-strategy"
 
 prs = Presentation()
 prs.slide_width  = SLIDE_W

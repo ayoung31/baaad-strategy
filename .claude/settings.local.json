@@ -7,7 +7,8 @@
       "WebFetch(domain:boardgamegeek.com)",
       "WebFetch(domain:www.catan.com)",
       "Bash(Rscript testthat.R)",
-      "WebFetch(domain:www.quora.com)"
+      "WebFetch(domain:www.quora.com)",
+      "Bash(Rscript -e \"library\\(testthat\\); source\\(''R/board.R''\\); source\\(''R/player.R''\\); test_file\\(''tests/testthat/test-player.R''\\)\")"
     ]
   }
 }
