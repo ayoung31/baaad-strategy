@@ -17,7 +17,7 @@
 #SBATCH --output=logs/catan-sim-%j.out   # %j = job ID
 #SBATCH --error=logs/catan-sim-%j.err
 #SBATCH --ntasks=1                        # single task; parallelism is within R
-#SBATCH --cpus-per-task=8                 # R workers; tune to your node size
+#SBATCH --cpus-per-task=20                # R workers; tune to your node size
 #SBATCH --mem=16G                         # ~2 GB per worker is comfortable
 #SBATCH --time=01:00:00                   # 1000 games / 8 cores ≈ 15–20 min;
                                           # 1 h gives headroom for slower boards

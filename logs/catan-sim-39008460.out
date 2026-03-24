@@ -1,0 +1,29 @@
+========================================
+Job ID    : 39008460
+Node      : c151605
+CPUs      : 20
+N_GAMES   : 1000
+SEED      : 42
+Started   : Tue Mar 24 04:34:40 PM EDT 2026
+========================================
+WARNING: ignoring environment value of R_HOME
+baaad-strategy simulation
+  n_games : 1000
+  n_cores : 20
+  seed    : 42
+
+Finished in 191.6 seconds (0.19 s/game).
+
+
+--- Win rates ---
+  strategy wins games_played win_pct ci_lower ci_upper
+ ore_grain  491         1000    49.1       46     52.2
+  balanced  390         1000    39.0       36     42.1
+     sheep  119         1000    11.9       10     14.1
+
+Stalemate rate : 0.0%
+Mean turns     : 95.8
+========================================
+Finished  : Tue Mar 24 04:37:53 PM EDT 2026
+Exit code : 0
+========================================
