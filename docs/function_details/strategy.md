@@ -394,7 +394,7 @@ Routes toward the nearest Wool port intersection until the port is secured, then
 
 ---
 
-### `ore_grain_strategy(og_weight = 2, total_weight = 1.0, closing_vp = 5, balance_weight = 1)`
+### `ore_grain_strategy(og_weight = 2, total_weight = 0.5, closing_vp = 5, balance_weight = 1)`
 
 **Goal:** Reference strong strategy. Fast-track city upgrades via ore+grain dominance.
 
@@ -404,7 +404,7 @@ Routes toward the nearest Wool port intersection until the port is secured, then
 score = (ore_pips + grain_pips) * og_weight + total_pips * total_weight
 ```
 
-`total_weight = 1.0` ensures spots with some lumber or brick alongside ore/grain remain competitive, preventing the strategy from picking pure ore/grain locations that leave it unable to build roads or its third settlement.
+`total_weight = 0.5` is a weak tie-breaker on total production, matching `sheep_strategy`'s setting so that both strategies weight their secondary (non-target) production equally. The `make_gap_fn` infrastructure guard handles non-target resource coverage explicitly, so `total_weight` only needs to break ties between otherwise equal target-resource spots.
 
 **Second placement:** Two-phase logic mirroring `sheep_strategy`:
 - **Infrastructure missing:** Same infra-first filter as sheep — candidates restricted to those providing missing lumber/brick (prefer both; fall back to one; final fallback all). Gap-aware scoring uses `og_weight` as the balance weight (matching the ore/grain multiplier so infra bonuses can compete). No port bonus.

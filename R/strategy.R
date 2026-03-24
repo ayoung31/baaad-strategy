@@ -950,10 +950,14 @@ sheep_strategy <- function(wool_weight = 2, total_weight = 0.5, closing_vp = 5,
 
       gap_fn <- make_gap_fn(board, player, score_fn, balance_weight)
 
+      wool_port_ints <- port_intersections(board, "wool")
+
       if (!has_lb) {
         # Infrastructure first: restrict candidates to those that provide at
         # least one of the missing infra resources (lumber, brick).
         # Prefer intersections covering BOTH; fall back to at least one.
+        # Port bonus still applies within the filtered set so an intersection
+        # that provides infra AND borders a Wool port scores higher.
         missing_infra <- setdiff(c("lumber", "brick"), covered_first)
         provides_res  <- function(id, res) {
           any(vapply(hexes_at_intersection(board, id), function(hid) {
@@ -965,16 +969,14 @@ sheep_strategy <- function(wool_weight = 2, total_weight = 0.5, closing_vp = 5,
         use_cands   <- if (length(both_cands)  > 0L) both_cands
                        else if (length(infra_cands) > 0L) infra_cands
                        else candidates
-        scores <- vapply(use_cands, function(id) gap_fn(board, id), numeric(1))
-        use_cands[which.max(scores)]
       } else {
-        # Infrastructure covered: apply full port bonus + gap scoring.
-        wool_port_ints <- port_intersections(board, "wool")
-        scores <- vapply(candidates, function(id) {
-          gap_fn(board, id) + if (id %in% wool_port_ints) 100 else 0
-        }, numeric(1))
-        candidates[which.max(scores)]
+        use_cands <- candidates
       }
+
+      scores <- vapply(use_cands, function(id) {
+        gap_fn(board, id) + if (id %in% wool_port_ints) 100 else 0
+      }, numeric(1))
+      use_cands[which.max(scores)]
     },
 
     # -------------------------------------------------------------------------
@@ -1159,7 +1161,7 @@ sheep_strategy <- function(wool_weight = 2, total_weight = 0.5, closing_vp = 5,
 #' @param og_weight    Numeric multiplier on ore+grain pips (default 2).
 #' @param total_weight Numeric tie-breaker on total pips (default 0.5).
 #' @return Named list of four strategy functions.
-ore_grain_strategy <- function(og_weight = 2, total_weight = 1.0, closing_vp = 5,
+ore_grain_strategy <- function(og_weight = 2, total_weight = 0.5, closing_vp = 5,
                                balance_weight = 1) {
 
   # Combined ore+grain scoring.
@@ -1206,10 +1208,15 @@ ore_grain_strategy <- function(og_weight = 2, total_weight = 1.0, closing_vp = 5
       gap_fn <- make_gap_fn(board, player, score_fn,
                             if (has_lb) balance_weight else og_weight)
 
+      ore_port_ints   <- port_intersections(board, "ore")
+      grain_port_ints <- port_intersections(board, "grain")
+
       if (!has_lb) {
         # Infrastructure first: restrict candidates to those that provide at
         # least one of the missing infra resources (lumber, brick).
         # Prefer intersections covering BOTH; fall back to at least one.
+        # Port bonus still applies within the filtered set so an intersection
+        # that provides infra AND borders an Ore/Grain port scores higher.
         missing_infra <- setdiff(c("lumber", "brick"), covered_first)
         provides_res  <- function(id, res) {
           any(vapply(hexes_at_intersection(board, id), function(hid) {
@@ -1221,17 +1228,14 @@ ore_grain_strategy <- function(og_weight = 2, total_weight = 1.0, closing_vp = 5
         use_cands   <- if (length(both_cands)  > 0L) both_cands
                        else if (length(infra_cands) > 0L) infra_cands
                        else candidates
-        scores <- vapply(use_cands, function(id) gap_fn(board, id), numeric(1))
-        use_cands[which.max(scores)]
       } else {
-        # Infrastructure covered: apply port bonus + gap scoring.
-        ore_port_ints   <- port_intersections(board, "ore")
-        grain_port_ints <- port_intersections(board, "grain")
-        scores <- vapply(candidates, function(id) {
-          gap_fn(board, id) + if (id %in% ore_port_ints || id %in% grain_port_ints) 50 else 0
-        }, numeric(1))
-        candidates[which.max(scores)]
+        use_cands <- candidates
       }
+
+      scores <- vapply(use_cands, function(id) {
+        gap_fn(board, id) + if (id %in% ore_port_ints || id %in% grain_port_ints) 50 else 0
+      }, numeric(1))
+      use_cands[which.max(scores)]
     },
 
     # -------------------------------------------------------------------------

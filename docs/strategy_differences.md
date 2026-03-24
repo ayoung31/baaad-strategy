@@ -37,10 +37,10 @@ Heavily weights wool production. `total_pips × 0.5` is a weak tiebreaker that p
 ### ore_grain
 
 ```
-score = (ore_pips + grain_pips) × 2 + total_pips × 1.0
+score = (ore_pips + grain_pips) × 2 + total_pips × 0.5
 ```
 
-Heavily weights ore and grain. `total_weight = 1.0` (higher than sheep's 0.5) keeps spots with some lumber or brick alongside ore/grain competitive, preventing purely isolated ore/grain placements that leave the player with no infrastructure.
+Heavily weights ore and grain. `total_weight = 0.5` matches sheep's setting so both strategies treat non-target production as an equal-weight tie-breaker. Infrastructure coverage is handled explicitly by `make_gap_fn`, not by inflating `total_weight`.
 
 ---
 
@@ -60,12 +60,14 @@ Both sheep and ore_grain apply an infrastructure guard on their reverse-pass (se
 
 The guard ensures the combined initial two settlements always cover at least one infrastructure resource, preventing the player from being permanently unable to build roads or settlements.
 
-**Port bonuses when `has_lb = TRUE`:**
+**Port bonuses (always applied, within the filtered candidate set):**
 
 | Strategy | Port bonus |
 |---|---|
-| sheep | +100 to Wool port intersections (hard target) |
+| sheep | +100 to Wool port intersections |
 | ore_grain | +50 to Ore or Grain port intersections |
+
+When `has_lb = FALSE`, the port bonus is applied within the infra-filtered candidate set — so an intersection that provides lumber or brick *and* borders a target port scores higher than plain infrastructure. `has_lb` controls only the filtering step, not whether the bonus fires.
 
 ---
 
