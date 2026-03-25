@@ -27,7 +27,10 @@
       "Bash(Rscript --vanilla -e ':*)",
       "Bash(Rscript --vanilla /tmp/mc_test.R)",
       "Bash(Rscript -e \"library\\(testthat\\); source\\(file.path\\(getwd\\(\\), ''..'', ''R'', ''board.R''\\)\\); test_file\\(''testthat/test-simulation.R'', reporter = ''progress''\\)\")",
-      "Bash(Rscript -e \"library\\(testthat\\); source\\(file.path\\(getwd\\(\\), ''..'', ''R'', ''board.R''\\)\\); test_file\\(''testthat/test-analysis.R'', reporter = ''progress''\\)\")"
+      "Bash(Rscript -e \"library\\(testthat\\); source\\(file.path\\(getwd\\(\\), ''..'', ''R'', ''board.R''\\)\\); test_file\\(''testthat/test-analysis.R'', reporter = ''progress''\\)\")",
+      "Bash(Rscript tmp_plot_seeds.R)",
+      "Bash(python3 -c \":*)",
+      "Bash(python -c \":*)"
     ]
   }
 }

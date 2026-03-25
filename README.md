@@ -33,6 +33,125 @@ The sheep strategy should lose because:
 
 ---
 
+## Reproducing the Analysis
+
+### 1. Prerequisites
+
+- **R >= 4.1** — download from [cran.r-project.org](https://cran.r-project.org)
+- **RStudio** (optional but recommended) — download from [posit.co/download/rstudio-desktop](https://posit.co/download/rstudio-desktop)
+
+### 2. Clone the repository
+
+```bash
+git clone https://github.com/<your-username>/baaad-strategy.git
+cd baaad-strategy
+```
+
+### 3. Install dependencies
+
+Open R (or the RStudio console) and run:
+
+```r
+install.packages(c("ggplot2", "patchwork", "testthat"))
+```
+
+`parallel` is used for multi-core simulation but ships with base R — no installation needed.
+
+### 4. Source the modules
+
+All scripts assume the working directory is the repo root. In RStudio, open the project folder. From the R console:
+
+```r
+setwd("path/to/baaad-strategy")  # skip if already in the repo root
+
+source("R/board.R")
+source("R/player.R")
+source("R/strategy.R")
+source("R/game.R")
+source("R/simulation.R")
+source("R/analysis.R")
+```
+
+### 5. Define strategies
+
+```r
+strategies <- list(
+  balanced  = balanced_strategy(),
+  sheep     = sheep_strategy(),
+  ore_grain = ore_grain_strategy()
+)
+```
+
+### 6. Run the simulation
+
+```r
+sim <- run_simulation(n_games = 1000, strategies = strategies, seed = 42)
+```
+
+This takes a few minutes on a single core. To speed it up with parallel workers:
+
+```r
+sim <- run_simulation(
+  n_games    = 1000,
+  strategies = strategies,
+  seed       = 42,
+  n_cores    = parallel::detectCores() - 1L
+)
+```
+
+Results are automatically written to `results/simulation_results.csv` and `results/simulation_players.csv`.
+
+### 7. Generate analysis figures
+
+```r
+run_analysis(sim)
+```
+
+This saves three plots to `figures/` and prints the chi-squared test result to the console:
+
+| File | Contents |
+|---|---|
+| `figures/win_rates.png` | Win rate by strategy with confidence intervals |
+| `figures/vp_distribution.png` | Final VP distribution per strategy |
+| `figures/game_length.png` | Turn count distribution per game |
+
+To reload results from a previous run without re-running the simulation:
+
+```r
+run_analysis("results")
+```
+
+### 8. Visualize a single game (optional)
+
+```r
+source("R/visualize_board.R")
+
+result <- run_game(strategies, seed = 41)
+
+# Board with piece positions and player legend
+plot_board(result$board, players = result$player_objects)
+
+# Full game-state view with per-player info panels
+plot_game_state(result$board, result$player_objects)
+```
+
+To save the game-state image:
+
+```r
+png("figures/game_state.png", width = 2400, height = 1800, res = 150)
+print(plot_game_state(result$board, result$player_objects))
+dev.off()
+```
+
+### 9. Run the tests (optional)
+
+```r
+library(testthat)
+test_dir("tests/testthat")
+```
+
+---
+
 ## Architecture
 
 Written in base R with `ggplot2` and `patchwork`. Seven modules:
@@ -57,102 +176,3 @@ R/
 | Largest Army | Tracked; 2 VP at 3+ knights |
 | Dev card variety | All five types implemented (Knight, VP, Road Building, Year of Plenty, Monopoly) |
 | Robber targeting | Always targets the leading player |
-
----
-
-## Usage
-
-### Run a simulation
-
-```r
-source("R/board.R")
-source("R/player.R")
-source("R/strategy.R")
-source("R/game.R")
-source("R/simulation.R")
-
-strategies <- list(
-  balanced  = balanced_strategy(),
-  sheep     = sheep_strategy(),
-  ore_grain = ore_grain_strategy()
-)
-
-sim <- run_simulation(n_games = 1000, strategies = strategies, seed = 42)
-```
-
-Parallel execution is supported via the `n_cores` argument:
-
-```r
-sim <- run_simulation(n_games = 1000, strategies = strategies,
-                      seed = 42, n_cores = 4L)
-```
-
-Results are written to `results/simulation_results.csv` and `results/simulation_players.csv`.
-
-### Analyse results
-
-```r
-source("R/analysis.R")
-
-run_analysis(sim)
-# Saves win_rates.png, vp_distribution.png, game_length.png to figures/
-# Prints chi-squared test interpretation to console
-```
-
-You can also load a previous run from disk:
-
-```r
-run_analysis("results")
-```
-
-### Inspect a single game
-
-`run_game()` returns the final board state and all player objects alongside the summary statistics, making it easy to inspect what happened:
-
-```r
-result <- run_game(strategies, seed = 41)
-
-result$winner_id        # winning player ID
-result$turns            # number of turns taken
-result$players          # data.frame summary (one row per player)
-result$player_objects   # full player state list
-result$board            # final board state
-```
-
-### Visualize the board
-
-`plot_board()` renders the hex grid with terrain, tokens, ports, and any placed pieces:
-
-```r
-source("R/visualize_board.R")
-
-result <- run_game(strategies, seed = 41)
-
-# Board only
-plot_board(result$board)
-
-# Board with player legend labels derived from strategy names
-plot_board(result$board, players = result$player_objects)
-```
-
-### Full game-state view
-
-`plot_game_state()` composes the board with per-player info panels showing VP breakdown, special cards, knights played, and resources in hand. Player 1 sits on the left, Player 2 across the top, Player 3 on the right, each panel colored to match their piece color.
-
-```r
-plot_game_state(result$board, result$player_objects)
-```
-
-Recommended save dimensions (4:3 keeps the board square):
-
-```r
-png("figures/game_state.png", width = 2400, height = 1800, res = 150)
-print(plot_game_state(result$board, result$player_objects))
-dev.off()
-```
-
-The `size` parameter scales all visual elements — board, pieces, text, and panels — proportionally:
-
-```r
-plot_game_state(result$board, result$player_objects, size = 2)
-```
